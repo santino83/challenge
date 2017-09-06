@@ -77,7 +77,8 @@ class PostController extends Controller
 
         $post->save();
 
-        $post->tags()->sync($request->tags, false);
+        if ( $request->has('tags') && is_array($request->tags) )
+            $post->tags()->sync($request->tags, false);
 
         Session::flash('success', 'The blog post was successfully save!');
 

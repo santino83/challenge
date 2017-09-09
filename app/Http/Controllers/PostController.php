@@ -67,18 +67,28 @@ class PostController extends Controller
         $post->body = Purifier::clean($request->body);
 
         if ($request->hasFile('featured_img')) {
+            
+          $folder = '/images/'.date('Y').'/'.date('m');
+          \Illuminate\Support\Facades\Storage::disk('local')->makeDirectory(public_path().$folder);
+            
           $image = $request->file('featured_img');
           $filename = time() . '.' . $image->getClientOriginalExtension();
-          $location = public_path('images/' . $filename);
+          $location = $folder.'/' . $filename;
           Image::make($image)->resize(800, 400)->save($location);
 
-          $post->image = $filename;
+          $post->image = $location;
         }
 
         $post->save();
 
         if ( $request->has('tags') && is_array($request->tags) )
             $post->tags()->sync($request->tags, false);
+        
+        Mail::send('emails.post_created', [], function($message){
+            $message->from('some.email@org');
+            $message->to($request->user()->email);
+            $message->subject('New Post created');
+        });
 
         Session::flash('success', 'The blog post was successfully save!');
 
